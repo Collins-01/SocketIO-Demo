@@ -1,22 +1,43 @@
-const express = require('express');
-var http = require('http')
-var io = require('socket.io')
-
-const  cors = require('cors')
-const app= express()
-
-const PORT = process.env.PORT ||  3000;
-
-var server = http.createServer(app);
-app.use(express.json())
-// app.use(cors())
-const socketIO = io.Server
 
 
-// socketIO.on("Connection", (socket)=>{
-//     console.log("Socket COnnection")
-// })
-server.listen(PORT, ()=> {
-    console.log(`Server Started on PORT : ${PORT}`)
+const server = require('http').createServer()
+const io = require('socket.io')(server)
+
+io.on('connection', function (client) {
+
+  console.log('client connect...', client.id);
+
+  client.on('typing', function name(data) {
+    console.log(data);
+    io.emit('typing', data)
+  })
+
+  client.on('message', function name(data) {
+    console.log(data);
+    io.emit('message', data)
+  })
+
+  client.on('location', function name(data) {
+    console.log(data);
+    io.emit('location', data);
+  })
+
+  client.on('connect', function () {
+  })
+
+  client.on('disconnect', function () {
+    console.log('client disconnect...', client.id)
+    // handleDisconnect()
+  })
+
+  client.on('error', function (err) {
+    console.log('received error from client:', client.id)
+    console.log(err)
+  })
 })
 
+var server_port = process.env.PORT || 3000;
+server.listen(server_port, function (err) {
+  if (err) throw err
+  console.log('Listening on port %d', server_port);
+});
