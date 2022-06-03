@@ -15,7 +15,6 @@ io.on('connection', (socket)=>{
   const id= socket.handshake.query.id
   console.log(`Connected User -> ${username}`)
   socket.on('message', (data)=>{
-   
     const message = {
       id : data.id,
       msg: data.msg,
@@ -23,19 +22,25 @@ io.on('connection', (socket)=>{
       senderID: data.senderID,
       sentAt: data.sentAt
     }
-    console.log(message);
+    console.log(`Recieved Message => ${message}`);
     messages.push(message)
-    io.emit('message', message)
+    // io.emit('message', message)
+    //* Emits Delivered once the message get to  the server.
+    io.emit('delivered', {
+      id: message.id,
+      recieverID: message.recieverID,
+      senderID: message.senderID,
+    })
   })
 
   
   
 })
 
-io.on('typing',(data)=>{
-  console.log(data)
-  io.emit('typing', `${username} is Typing...`)
-})
+// io.on('typing',(data)=>{
+//   console.log(data)
+//   io.emit('typing', `${username} is Typing...`)
+// })
 
 const PORT= 3000;
 server.listen(PORT, ()=>{
@@ -49,6 +54,4 @@ emits delivered(messageID)=> when the message gets to the sever, it emits a deli
 emits read(messageID)=> when the message gets delivered to Alice, it gets saved in the SQL table. when Alice opens a chat with a particular user, it emits [Read] to all the messages that show delivered to that user.
 it should take a list of messageIDs
 example, in the table messages..... SELECT * FROM messages WHERE
-
-
 */
