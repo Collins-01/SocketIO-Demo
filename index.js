@@ -46,20 +46,27 @@ io.on('connection', (socket) => {
     }
 
     //* Emits Delivered once the message gets to the user
+      io.on(events.message_delivered, (data)=>{
+        if(clients[id]){
+          clients[id].emit(events.message_delivered, {
+            id: message.id
+          })
+      }else{
+        return;
+      }
+      })
 
-    if(clients[id]){
-        clients[id].emit(events.message_delivered, {
-          id: message.id
-        })
-    }else{
-      return;
-    }
     /// Message seen by the user
+   io.on(events.message_seen, (data)=>{
     if(clients[id]){
       clients[id].on(events.message_seen, () => {
         id: message.id
        })
     }
+    else{
+      return;
+    }
+   })
   })
 
 
