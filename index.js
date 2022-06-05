@@ -6,15 +6,20 @@ const {Server} = require('socket.io')
 const io = new Server(server)
 
 const messages =[];
-
+const clients = {};
 
 
 io.on('connection', (socket)=>{
   console.log("A user connected")
+  /// Gets the values from the onConnection Method of the client.
   const username= socket.handshake.query.username
   const id= socket.handshake.query.id
+  /// Assign the new socket value from the connected user, to the user's id.
+  clients[id]=socket;
+  /// Adds a new user to the active list of connected users.
   console.log(`Connected User -> ${username}`)
-  socket.on('message', (data)=>{
+  //* Listening for message events
+  socket.on(events.message, (data)=>{
     const message = {
       id : data.id,
       msg: data.msg,
@@ -23,24 +28,34 @@ io.on('connection', (socket)=>{
       sentAt: data.sentAt
     }
     console.log(`Recieved Message => ${message}`);
+    io.emit(events.message_sent, message.id)
+    //* Populates the Messages
     messages.push(message)
-    // io.emit('message', message)
-    //* Emits Delivered once the message get to  the server.
-    io.emit('delivered', {
+     if (clients[id]) {
+       clients[index].emit(events.message, message);
+     }
+     else{
+       console.log("Do Nothing, since the user is not connected")
+       return;
+     }
+    
+    //* Emits Delivered once the message gets to the user
+    io.on(events.message_delivered, {
       id: message.id,
-      recieverID: message.recieverID,
-      senderID: message.senderID,
-    })
+    });
   })
 
   
   
 })
 
-// io.on('typing',(data)=>{
-//   console.log(data)
-//   io.emit('typing', `${username} is Typing...`)
-// })
+ const events = {
+   message: 'message',
+   message_sent: 'message_sent',
+   message_delivered: 'message_delivered',  
+   last_seen: 'last_seen'
+
+ }
 
 const PORT= 3000;
 server.listen(PORT, ()=>{
