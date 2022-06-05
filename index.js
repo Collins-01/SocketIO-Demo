@@ -1,66 +1,85 @@
 const express = require('express')
-const app= express();
-const http= require('http')
-const server= http.createServer(app)
-const {Server} = require('socket.io')
+const app = express();
+const http = require('http')
+const server = http.createServer(app)
+const { Server } = require('socket.io')
 const io = new Server(server)
 
-const messages =[];
+const messages = [];
 const clients = {};
 
 
-io.on('connection', (socket)=>{
+io.on('connection', (socket) => {
   console.log("A user connected")
   /// Gets the values from the onConnection Method of the client.
-  const username= socket.handshake.query.username
-  const id= socket.handshake.query.id
+  const username = socket.handshake.query.username
+  const id = socket.handshake.query.id
   /// Assign the new socket value from the connected user, to the user's id.
-  clients[id]=socket;
+  clients[id] = socket;
   /// Adds a new user to the active list of connected users.
   console.log(`Connected User -> ${username}`)
   //* Listening for message events
-  socket.on(events.message, (data)=>{
+  socket.on(events.message, (data) => {
     const message = {
-      id : data.id,
+      id: data.id,
       msg: data.msg,
       recieverID: data.recieverID,
       senderID: data.senderID,
       sentAt: data.sentAt
     }
     console.log(`Recieved Message => ${message}`);
-    io.emit(events.message_sent, message.id)
+    if(clients[id]){
+        clients[id].emit(events.message_sent, {
+          id: message.id
+        })
+    }else{
+      return;
+    }
     //* Populates the Messages
     messages.push(message)
-     if (clients[id]) {
-       clients[index].emit(events.message, message);
-     }
-     else{
-       console.log("Do Nothing, since the user is not connected")
-       return;
-     }
-    
+    if (clients[id]) {
+      clients[index].emit(events.message, message);
+    }
+    else {
+      console.log("Do Nothing, since the user is not connected")
+      return;
+    }
+
     //* Emits Delivered once the message gets to the user
-    io.on(events.message_delivered, {
-      id: message.id,
-    });
+
+    if(clients[id]){
+        clients[id].emit(events.message_delivered, {
+          id: message.id
+        })
+    }else{
+      return;
+    }
+    /// Message seen by the user
+    if(clients[id]){
+      clients[id].on(events.message_seen, () => {
+        id: message.id
+       })
+    }
   })
 
-  
-  
+
+
+
 })
 
- const events = {
-   message: 'message',
-   message_sent: 'message_sent',
-   message_delivered: 'message_delivered',  
-   last_seen: 'last_seen'
+const events = {
+  message: 'message',
+  message_sent: 'message_sent',
+  message_delivered: 'message_delivered',
+  last_seen: 'last_seen',
+  message_seen: 'message_seen'
 
- }
+}
 
-const PORT= 3000;
-server.listen(PORT, ()=>{
+const PORT = 3000;
+server.listen(PORT, () => {
   console.log(`Server has started on PORT : ${PORT}`)
-}) 
+})
 
 
 /*
